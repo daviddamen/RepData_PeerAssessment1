@@ -8,18 +8,46 @@ The data for this assignment consists of activity measurements:
 
 It is contained in the activity.zip file in this repo.
 
+This knitr document has been run with the following global commands:
+
+```{r setoptions, echo=TRUE}
+options(scipen = 1, digits = 1)
+```
+
 ## Loading and preprocessing the data
 
-First, we unzip the activity data and read it into a data frame.
+First, all library includes are listed. This way, it is immediately signalled
+if all necessary packages are installed or not.
 
-```{r, echo = TRUE} 
+```{r, echo=TRUE}
+library(plyr)
+```
+
+Then, the activity data is unzipped and read it into a data frame.
+
+```{r, echo=TRUE} 
 unzip("activity.zip")
 activity <- read.csv("activity.csv")
 ```
 
 ## What is mean total number of steps taken per day?
 
+The step amounts in the activity data are aggregated by day. 
 
+```{r, echo=TRUE}
+activity_by_day <- ddply(activity, .(date), summarize, steps=sum(steps))
+```
+
+The figure below shows the histogram of steps taken by day.
+
+```{r, echo=TRUE}
+hist(activity_by_day$steps, xlab="Steps", ylab="Days", main="Steps distribution (by day)")
+mean <- mean(activity_by_day$steps, na.rm=TRUE)
+median <- median(activity_by_day$steps, na.rm=TRUE)
+```
+
+On average, `r mean` steps were taken by day, with a median of `r median` 
+steps.
 
 ## What is the average daily activity pattern?
 
