@@ -10,8 +10,11 @@ It is contained in the activity.zip file in this repo.
 
 This knitr document has been run with the following global commands:
 
+* No scientific notation for long numbers.
+* No digits after the point for floating point numbers.
+
 ```{r setoptions, echo=TRUE}
-options(scipen = 1, digits = 1)
+options(scipen = 1, digits = 0)
 ```
 
 ## Loading and preprocessing the data
@@ -35,16 +38,19 @@ activity <- read.csv("activity.csv")
 The step amounts in the activity data are aggregated by day. 
 
 ```{r, echo=TRUE}
-activity_by_day <- ddply(activity, .(date), summarize, total_steps=sum(steps, na.rm=TRUE))
+activity_by_day <- ddply(activity, .(date), summarize, steps=sum(steps, na.rm=TRUE))
 ```
 
 The figure below shows the histogram of steps taken by day.
 
 ```{r, echo=TRUE}
-hist(activity_by_day$total_steps, xlab="Steps", ylab="Days", main="Steps distribution (by day)")
+hist(activity_by_day$steps, 
+     xlab="Steps", 
+     ylab="Days", 
+     main="Steps distribution (by day)")
 
-mean <- mean(activity_by_day$total_steps)
-median <- median(activity_by_day$total_steps)
+mean <- mean(activity_by_day$steps)
+median <- median(activity_by_day$steps)
 ```
 
 On average, `r mean` steps were taken by day, with a median of `r median` 
@@ -56,23 +62,75 @@ The step amounts are aggregated by (5-minute) interval and averaged over all
 days.
 
 ```{r, echo=TRUE}
-activity_by_interval <- ddply(activity, .(interval), summarize, average_steps=mean(steps, na.rm=TRUE))
+activity_by_interval <- ddply(activity, .(interval), summarize, avg_steps=mean(steps, na.rm=TRUE))
 ```
 
 The figure below shows a time series of average daily step pattern in 5-minute
 intervals.
 
 ```{r, echo=TRUE}
-plot(activity_by_interval$average_steps, type="l", xaxt="n", xlab="Time of day", ylab="Average steps", main="Daily activity pattern")
-axis(1, at=1:length(activity_by_interval$interval), labels=activity_by_interval$interval)
+plot(activity_by_interval$avg_steps, 
+     type="l", 
+     xaxt="n", 
+     xlab="Time of day", 
+     ylab="Average steps", 
+     main="Daily activity pattern")
+axis(1, 
+     at=1:length(activity_by_interval$interval), 
+     labels=activity_by_interval$interval)
 
-max_steps_in_day <- activity_by_interval[which.max(activity_by_interval$average_steps),]
+max_steps_in_day <- activity_by_interval[which.max(activity_by_interval$avg_steps),]
 ```
 
 The most steps in a single 5-minute interval on average were at `r max_steps_in_day$interval`.
 
 ## Imputing missing values
 
+```{r, echo=TRUE}
+valid <- complete.cases(activity$steps)
+nr_of_NAs <- sum(!valid)
+```
 
+The activity data set contains `r nr_of_NAs` rows with NA values.
+
+Missing values are imputed by taking the daily average steps for that interval
+over the entire dataset.
+
+```{r, echo=TRUE}
+imputed_activity <- activity
+for (i in 1:length(imputed_activity$steps)) {
+    if (is.na(imputed_activity$steps[i])) {
+        interval <- imputed_activity$interval[i] 
+        index <- activity_by_interval$interval == interval
+        imputed_activity$steps[i] <- activity_by_interval$avg_steps[index]
+    }
+}
+```
+
+The step amounts of the new imputed activity data are again aggregated by day. 
+
+```{r, echo=TRUE}
+imputed_activity_by_day <- ddply(imputed_activity, .(date), summarize, steps=sum(steps, na.rm=TRUE))
+```
+
+The histogram below shows steps taken by day of the imputed activity data.
+
+```{r, echo=TRUE}
+hist(imputed_activity_by_day$steps, 
+     xlab="Steps", 
+     ylab="Days", 
+     main="Steps distribution (by day)")
+
+imputed_mean <- mean(imputed_activity_by_day$steps)
+imputed_median <- median(imputed_activity_by_day$steps)
+```
+
+The average by day of the imputed data is `r imputed_mean` steps, with a median
+of `r imputed_median` steps.  
+These values differ from the base activity data. The choice of imputing by mean
+steps over all days by 5-minute interval combined with the fact that, when
+missing values (NAs) are present, they are present for a full day has resulted
+in the same mean and median for the imputed activity dataset. They are also
+higher than in the base activity data set.
 
 ## Are there differences in activity patterns between weekdays and weekends?
