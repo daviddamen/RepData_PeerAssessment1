@@ -1,9 +1,21 @@
 # Reproducible Research: Peer Assessment 1
 
+The data for this assignment consists of activity measurements:
+
+* _steps_: Number of steps taking in a 5-minute interval (missing values are coded as NA).
+* _date_: The date on which the measurement was taken in YYYY-MM-DD format.
+* _interval_: Identifier for the 5-minute interval in which measurement was taken.
+
+It is contained in the activity.zip file in this repo.
 
 ## Loading and preprocessing the data
 
+First, we unzip the activity data and read it into a data frame.
 
+```{r, echo = TRUE} 
+unzip("activity.zip")
+activity <- read.csv("activity.csv")
+```
 
 ## What is mean total number of steps taken per day?
 
