@@ -35,15 +35,16 @@ activity <- read.csv("activity.csv")
 The step amounts in the activity data are aggregated by day. 
 
 ```{r, echo=TRUE}
-activity_by_day <- ddply(activity, .(date), summarize, steps=sum(steps))
+activity_by_day <- ddply(activity, .(date), summarize, total_steps=sum(steps, na.rm=TRUE))
 ```
 
 The figure below shows the histogram of steps taken by day.
 
 ```{r, echo=TRUE}
-hist(activity_by_day$steps, xlab="Steps", ylab="Days", main="Steps distribution (by day)")
-mean <- mean(activity_by_day$steps, na.rm=TRUE)
-median <- median(activity_by_day$steps, na.rm=TRUE)
+hist(activity_by_day$total_steps, xlab="Steps", ylab="Days", main="Steps distribution (by day)")
+
+mean <- mean(activity_by_day$total_steps)
+median <- median(activity_by_day$total_steps)
 ```
 
 On average, `r mean` steps were taken by day, with a median of `r median` 
@@ -51,7 +52,24 @@ steps.
 
 ## What is the average daily activity pattern?
 
+The step amounts are aggregated by (5-minute) interval and averaged over all
+days.
 
+```{r, echo=TRUE}
+activity_by_interval <- ddply(activity, .(interval), summarize, average_steps=mean(steps, na.rm=TRUE))
+```
+
+The figure below shows a time series of average daily step pattern in 5-minute
+intervals.
+
+```{r, echo=TRUE}
+plot(activity_by_interval$average_steps, type="l", xaxt="n", xlab="Time of day", ylab="Average steps", main="Daily activity pattern")
+axis(1, at=1:length(activity_by_interval$interval), labels=activity_by_interval$interval)
+
+max_steps_in_day <- activity_by_interval[which.max(activity_by_interval$average_steps),]
+```
+
+The most steps in a single 5-minute interval on average were at `r max_steps_in_day$interval`.
 
 ## Imputing missing values
 
