@@ -24,6 +24,7 @@ if all necessary packages are installed or not.
 
 ```{r, echo=TRUE}
 library(plyr)
+library(lattice)
 ```
 
 Then, the activity data is unzipped and read it into a data frame.
@@ -31,6 +32,7 @@ Then, the activity data is unzipped and read it into a data frame.
 ```{r, echo=TRUE} 
 unzip("activity.zip")
 activity <- read.csv("activity.csv")
+activity$date <- as.POSIXct(activity$date)
 ```
 
 ## What is mean total number of steps taken per day?
@@ -127,6 +129,7 @@ imputed_median <- median(imputed_activity_by_day$steps)
 
 The average by day of the imputed data is `r imputed_mean` steps, with a median
 of `r imputed_median` steps.  
+
 These values differ from the base activity data. The choice of imputing by mean
 steps over all days by 5-minute interval combined with the fact that, when
 missing values (NAs) are present, they are present for a full day has resulted
@@ -134,3 +137,22 @@ in the same mean and median for the imputed activity dataset. They are also
 higher than in the base activity data set.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+A new factor variable is introduced to distinguish between weekdays and
+weekends.
+
+```{r, echo=TRUE}
+imputed_activity$time_of_week <- as.factor(ifelse(weekdays(imputed_activity$date) %in% c("Saturday","Sunday"), "weekend", "weekday"))
+```
+
+From this, a panel plot containing a time series chart for both weekdays and
+weekends is created, showing the average over all days by 5-minute interval.
+
+```{r, echo=TRUE}
+temp_a <- ddply(imputed_activity[imputed_activity$time_of_week == "weekday", ], .(interval), summarize, avg_steps=mean(steps, na.rm=TRUE), time_of_week = as.factor("weekday"))
+temp_b <- ddply(imputed_activity[imputed_activity$time_of_week == "weekend", ], .(interval), summarize, avg_steps=mean(steps, na.rm=TRUE), time_of_week = as.factor("weekend"))
+
+imputed_activity_by_interval <- rbind(temp_a, temp_b)
+
+xyplot(avg_steps ~ interval | time_of_week, data=imputed_activity_by_interval, type='l', layout=c(1, 2), xlab="Interval", ylab="Number of steps")
+```
